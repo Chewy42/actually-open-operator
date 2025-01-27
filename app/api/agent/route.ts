@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
-import { openai } from "@ai-sdk/openai";
+import { ollama } from "@ai-sdk/ollama";
 import { CoreMessage, generateObject, UserContent } from "ai";
 import { z } from "zod";
-import { ObserveResult, Stagehand } from "@browserbasehq/stagehand";
+import { ObserveResult, SimulatedBrowser } from "@simulatedbrowserhq/sdk";
 
-const LLMClient = openai("gpt-4o");
+const LLMClient = ollama({
+  baseUrl: process.env.OPENAI_LIKE_BASE_URL,
+  modelId: process.env.OPENAI_LIKE_MODEL_ID,
+  apiKey: process.env.OPENAI_LIKE_API_KEY,
+});
 
 type Step = {
   text: string;
@@ -22,9 +26,8 @@ async function runStagehand({
   method: "GOTO" | "ACT" | "EXTRACT" | "CLOSE" | "SCREENSHOT" | "OBSERVE" | "WAIT" | "NAVBACK";
   instruction?: string;
 }) {
-  const stagehand = new Stagehand({
-    browserbaseSessionID: sessionID,
-    env: "BROWSERBASE",
+  const stagehand = new SimulatedBrowser({
+    sessionID,
     logger: () => {},
   });
   await stagehand.init();
@@ -95,9 +98,8 @@ async function sendPrompt({
   let currentUrl = "";
 
   try {
-    const stagehand = new Stagehand({
-      browserbaseSessionID: sessionID,
-      env: "BROWSERBASE"
+    const stagehand = new SimulatedBrowser({
+      sessionID,
     });
     await stagehand.init();
     currentUrl = await stagehand.page.url();
